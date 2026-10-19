@@ -1,0 +1,317 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/* PHOSPHOR DISPLAY MODES — tuned for night-vision & no-light use      */
+/* ------------------------------------------------------------------ */
+:root {
+  --bg0: #020806;
+  --bg1: #05110b;
+  --panel: #07150d;
+  --panel2: #0a1d12;
+  --line: rgba(104, 255, 158, 0.16);
+  --line-strong: rgba(104, 255, 158, 0.38);
+  --ink: #dcffe9;
+  --dim: #93c9a6;
+  --faint: #4e7a5f;
+  --acc: #58ff9b;
+  --acc2: #adffcf;
+  --acc-glow: rgba(88, 255, 155, 0.35);
+  --danger: #ff5648;
+  --danger-ink: #ffd9d4;
+  --warn: #ffc857;
+  --ok: #58ff9b;
+}
+
+:root[data-mode="amber"] {
+  --bg0: #090502;
+  --bg1: #130a03;
+  --panel: #170e05;
+  --panel2: #1f1307;
+  --line: rgba(255, 181, 73, 0.18);
+  --line-strong: rgba(255, 181, 73, 0.42);
+  --ink: #ffedd0;
+  --dim: #cfa46d;
+  --faint: #7a5c36;
+  --acc: #ffb549;
+  --acc2: #ffd9a3;
+  --acc-glow: rgba(255, 181, 73, 0.35);
+  --danger: #ff6a4d;
+  --danger-ink: #ffded6;
+  --warn: #ffd257;
+  --ok: #ffce6a;
+}
+
+:root[data-mode="red"] {
+  --bg0: #070202;
+  --bg1: #100404;
+  --panel: #140505;
+  --panel2: #1b0807;
+  --line: rgba(255, 106, 94, 0.16);
+  --line-strong: rgba(255, 106, 94, 0.4);
+  --ink: #ffdcd6;
+  --dim: #c08c85;
+  --faint: #71463f;
+  --acc: #ff6a5e;
+  --acc2: #ffa9a1;
+  --acc-glow: rgba(255, 106, 94, 0.32);
+  --danger: #ff8f83;
+  --danger-ink: #ffe4df;
+  --warn: #ffb1a6;
+  --ok: #ff8f83;
+}
+
+@theme inline {
+  --color-bg0: var(--bg0);
+  --color-bg1: var(--bg1);
+  --color-panel: var(--panel);
+  --color-panel2: var(--panel2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-dim: var(--dim);
+  --color-faint: var(--faint);
+  --color-acc: var(--acc);
+  --color-acc2: var(--acc2);
+  --color-danger: var(--danger);
+  --color-dangerInk: var(--danger-ink);
+  --color-warn: var(--warn);
+  --font-disp: var(--font-rajdhani), "Arial Narrow", sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
+  --font-data: var(--font-jet), "SF Mono", ui-monospace, monospace;
+}
+
+html,
+body {
+  background: var(--bg0);
+  color: var(--ink);
+}
+
+::selection {
+  background: var(--acc);
+  color: #000;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 0;
+}
+
+/* ---------- tactical framing -------------------------------------- */
+.t-corners {
+  position: relative;
+}
+.t-corners::before,
+.t-corners::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+.t-corners::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1.5px solid var(--line-strong);
+  border-left: 1.5px solid var(--line-strong);
+}
+.t-corners::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 1.5px solid var(--line-strong);
+  border-right: 1.5px solid var(--line-strong);
+}
+
+.tic-label {
+  letter-spacing: 0.22em;
+}
+
+/* ---------- overlays ----------------------------------------------- */
+.scanlines {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.16) 0px,
+    rgba(0, 0, 0, 0.16) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.35;
+}
+.vignette {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 89;
+  background: radial-gradient(
+    120% 100% at 50% 40%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+}
+.noise {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 88;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* ---------- motion -------------------------------------------------- */
+@keyframes blip {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  70% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.blip-ring {
+  animation: blip 2s ease-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes led {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.led {
+  animation: led 1.6s steps(2, start) infinite;
+}
+
+@keyframes sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.radar-sweep {
+  animation: sweep 6s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes hardPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--acc-glow);
+  }
+  50% {
+    box-shadow: 0 0 24px 2px var(--acc-glow);
+  }
+}
+.glow-pulse {
+  animation: hardPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes sosPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 86, 72, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 34px 4px rgba(255, 86, 72, 0.45);
+  }
+}
+.sos-pulse {
+  animation: sosPulse 2s ease-in-out infinite;
+}
+
+@keyframes flickerIn {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.6;
+  }
+  14% {
+    opacity: 0.1;
+  }
+  22% {
+    opacity: 0.9;
+  }
+  30% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.flicker-in {
+  animation: flickerIn 0.7s linear both;
+}
+
+/* per-character teletype reveal */
+@keyframes tty {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+input[type="range"].dimmer {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: var(--line-strong);
+  outline: none;
+}
+input[type="range"].dimmer::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: var(--acc);
+  border: none;
+  cursor: pointer;
+}
+input[type="range"].dimmer::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: var(--acc);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radar-sweep,
+  .blip-ring,
+  .glow-pulse,
+  .sos-pulse,
+  .led {
+    animation: none;
+  }
+}
