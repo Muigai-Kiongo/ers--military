@@ -7,7 +7,16 @@ import { Pool } from "pg";
 import { sql } from "drizzle-orm";
 import * as schema from "./schema";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const isRemoteDb =
+  process.env.DATABASE_URL?.includes("supabase.co") ||
+  process.env.DATABASE_URL?.includes("supabase.com") ||
+  process.env.DATABASE_URL?.includes("pooler.supabase.com") ||
+  process.env.DATABASE_URL?.includes("sslmode=");
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: isRemoteDb ? { rejectUnauthorized: false } : undefined,
+});
 const db = drizzle(pool, { schema });
 
 // --- local copies of crypto helpers so this runs as a plain node script ----
