@@ -74,7 +74,7 @@ const ROLES: Record<RoleType, RoleMeta> = {
     scope: [
       "Immediate 9-Line MEDEVAC submission with auto-MGRS grid",
       "Field Care Under Fire & MARCH casualty algorithms",
-      "Squad-level hazard reporting (IED, UXO, Enemy, CBRN)",
+      "Squad-level hazard reporting (Explosive, Injuries, Enemy, Nuclears)",
     ],
     defaultUser: { callSign: "VIPER-1-1", username: "viper11", rank: "SSG", name: "John Miller" },
     redirectPath: "/",

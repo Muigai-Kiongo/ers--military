@@ -25,12 +25,12 @@ import { INCIDENT_STATUS_LABEL, INCIDENT_TYPE_LABEL, timeAgo } from "@/lib/domai
 import type { IncidentDTO } from "@/lib/types";
 
 const TYPES = [
-  { id: "ied", label: "IED / ERW", icon: Bomb },
+  { id: "ied", label: "EXPLOSIVE", icon: Bomb },
   { id: "enemy", label: "ENEMY MVT", icon: Eye },
   { id: "fire", label: "FIRE", icon: Flame },
-  { id: "uxo", label: "UXO", icon: TriangleAlert },
+  { id: "uxo", label: "INJURIES", icon: TriangleAlert },
   { id: "accident", label: "ACCIDENT", icon: Car },
-  { id: "chem", label: "CBRN", icon: Radiation },
+  { id: "chem", label: "NUCLEARS", icon: Radiation },
   { id: "other", label: "OTHER", icon: Siren },
 ] as const;
 

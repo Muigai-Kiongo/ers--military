@@ -121,7 +121,7 @@ export default function OpsHome() {
               REPORT HAZARD
             </div>
             <div className="mt-1 text-[12px] leading-snug text-dim">
-              IED, enemy movement, fire, UXO — alerts nearby units + COC off the radio net.
+              Explosives, enemy movement, fire, injuries — alerts nearby units + COC off the radio net.
             </div>
           </Link>
 

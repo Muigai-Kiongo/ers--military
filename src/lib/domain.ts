@@ -28,12 +28,12 @@ export const ALERT_STATUS_LABEL: Record<string, string> = {
 };
 
 export const INCIDENT_TYPE_LABEL: Record<string, string> = {
-  ied: "IED / ERW",
+  ied: "EXPLOSIVE",
   enemy: "ENEMY MOVEMENT",
   fire: "FIRE",
-  uxo: "UXO",
+  uxo: "INJURIES",
   accident: "ACCIDENT / MVA",
-  chem: "CBRN HAZARD",
+  chem: "NUCLEARS",
   other: "OTHER HAZARD",
 };
 
