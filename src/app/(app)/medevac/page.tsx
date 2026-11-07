@@ -11,10 +11,12 @@ import {
   Crosshair,
   Loader2,
   MapPin,
+  Printer,
   RefreshCw,
   Send,
 } from "lucide-react";
 import { useMe } from "@/components/Shell";
+import { ReportPrintModal } from "@/components/ReportPrintModal";
 import { Stepper } from "@/components/ui";
 import { acquireFix, toGrid, type GeoFix } from "@/lib/client/hooks";
 import { transmit } from "@/lib/client/net";
@@ -113,6 +115,7 @@ export default function MedevacWizard() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ ref: string; queued: boolean; at: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [printOpen, setPrintOpen] = useState(false);
   const triedAuto = useRef(false);
 
   useEffect(() => {
@@ -160,6 +163,32 @@ export default function MedevacWizard() {
         .map((ch) => (PHONETIC[ch as keyof typeof PHONETIC] ? PHONETIC[ch as keyof typeof PHONETIC] : ch))
         .join(" "),
     [line1],
+  );
+
+  const medevacRawSummary = useMemo(
+    () => ({
+      ref: result?.ref ?? "MV-PREVIEW",
+      line1: line1 || "GRID UNAVAILABLE",
+      line2: line2 || "FM 36.375 / SABER MED",
+      line3,
+      line4,
+      line5,
+      line6,
+      line7,
+      line8,
+      line9,
+      mist: {
+        mechanism: `${mech}${injuries ? "" : " — DETAILS PENDING"}`,
+        injuries: injuries.trim().toUpperCase() || "UNSPECIFIED",
+        signs: signs.trim().toUpperCase() || "NOT REPORTED",
+        treatment: treatment.trim().toUpperCase() || "NONE REPORTED",
+      },
+      requesterCallSign: me?.callSign,
+      requesterRank: me?.rank,
+      unitCode: me?.unitCode,
+      createdAt: new Date().toISOString(),
+    }),
+    [result, line1, line2, line3, line4, line5, line6, line7, line8, line9, mech, injuries, signs, treatment, me],
   );
 
   const submit = async () => {
@@ -219,6 +248,13 @@ export default function MedevacWizard() {
             {result.at} · {result.queued ? "STORED LOCALLY, ENCRYPTED, AUTOSYNC ACTIVE" : "COC NOTIFIED — MONITOR BOARD FOR ACK"}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setPrintOpen(true)}
+              className="font-disp flex items-center justify-center gap-2 border border-acc bg-acc/15 px-6 py-3 text-sm font-bold tracking-[0.15em] text-acc hover:bg-acc/25 transition-colors"
+            >
+              <Printer size={16} /> PRINT 9-LINE &amp; MIST CARD
+            </button>
             <Link
               href="/board"
               className="font-disp border border-line-strong bg-panel2 px-6 py-3 text-sm font-bold tracking-[0.15em] text-acc hover:bg-panel"
@@ -236,6 +272,12 @@ export default function MedevacWizard() {
             </button>
           </div>
         </motion.div>
+
+        <ReportPrintModal
+          isOpen={printOpen}
+          onClose={() => setPrintOpen(false)}
+          medevacRaw={medevacRawSummary}
+        />
       </div>
     );
   }
@@ -477,14 +519,23 @@ MIST    ${mech} / ${injuries || "—"} / ${signs || "—"} / ${treatment || "—
                   {error}
                 </div>
               )}
-              <button
-                onClick={submit}
-                disabled={sending}
-                className="sos-pulse font-disp flex w-full items-center justify-center gap-3 border border-danger bg-danger py-4 text-xl font-bold tracking-[0.2em] text-dangerInk transition-colors hover:brightness-110 disabled:opacity-60"
-              >
-                {sending ? <Loader2 className="animate-spin" size={22} /> : <Send size={20} />}
-                {sending ? "TRANSMITTING …" : "TRANSMIT 9-LINE"}
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPrintOpen(true)}
+                  className="font-disp flex items-center justify-center gap-2 border border-line-strong bg-panel2 py-3 px-4 text-sm font-bold tracking-[0.15em] text-acc hover:bg-panel transition-colors"
+                >
+                  <Printer size={16} /> PRINT PREVIEW CARD
+                </button>
+                <button
+                  onClick={submit}
+                  disabled={sending}
+                  className="sos-pulse font-disp flex-1 flex items-center justify-center gap-3 border border-danger bg-danger py-4 text-xl font-bold tracking-[0.2em] text-dangerInk transition-colors hover:brightness-110 disabled:opacity-60"
+                >
+                  {sending ? <Loader2 className="animate-spin" size={22} /> : <Send size={20} />}
+                  {sending ? "TRANSMITTING …" : "TRANSMIT 9-LINE"}
+                </button>
+              </div>
             </div>
           )}
         </motion.div>
@@ -507,6 +558,12 @@ MIST    ${mech} / ${injuries || "—"} / ${signs || "—"} / ${treatment || "—
           CONTINUE <ChevronRight size={18} />
         </button>
       </div>
+
+      <ReportPrintModal
+        isOpen={printOpen}
+        onClose={() => setPrintOpen(false)}
+        medevacRaw={medevacRawSummary}
+      />
     </div>
   );
 }

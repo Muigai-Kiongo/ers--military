@@ -48,7 +48,7 @@ export async function logEvent(
 
 // ---------------- serialization -------------------------------------------
 
-export function serializeAlert(a: s.Alert, requester: s.User | null): AlertDTO {
+export function serializeAlert(a: s.Alert, requester: { callSign: string; rank: string } | null): AlertDTO {
   const payload = decryptPayload(a.payloadEnc) as AlertDTO["payload"];
   return {
     id: a.id,
@@ -65,7 +65,7 @@ export function serializeAlert(a: s.Alert, requester: s.User | null): AlertDTO {
   };
 }
 
-export function serializeIncident(i: s.Incident, reporter: s.User | null): IncidentDTO {
+export function serializeIncident(i: s.Incident, reporter: { callSign: string; rank: string } | null): IncidentDTO {
   const payload = decryptPayload<{ grid: string; description: string }>(i.payloadEnc);
   return {
     id: i.id,

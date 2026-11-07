@@ -8,11 +8,13 @@ import {
   ChevronDown,
   Cross,
   Loader2,
+  Printer,
   Radio,
   ScrollText,
   Users,
 } from "lucide-react";
 import { useMe } from "@/components/Shell";
+import { ReportPrintModal } from "@/components/ReportPrintModal";
 import TacMap from "@/components/TacMap";
 import {
   Pill,
@@ -92,6 +94,10 @@ export default function BoardPage() {
   const [incFilter, setIncFilter] = useState<"open" | "all" | "resolved">("open");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [printInc, setPrintInc] = useState<IncidentDTO | null>(null);
+  const [printIncList, setPrintIncList] = useState<IncidentDTO[] | null>(null);
+  const [printAlert, setPrintAlert] = useState<AlertDTO | null>(null);
+  const [printModalOpen, setPrintModalOpen] = useState(false);
   const [secTick, setSecTick] = useState(0);
   useEffect(() => {
     const iv = setInterval(() => setSecTick((t) => t + 1), 15000);
@@ -230,16 +236,30 @@ MIST  ${a.payload.mist.mechanism}
                         ) : (
                           <div className="font-data text-[11px] text-warn">PAYLOAD KEY ROTATED — UNAVAILABLE</div>
                         )}
-                        {canAct && next && (
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
                           <button
-                            onClick={() => act("alerts", a.id, next)}
-                            disabled={busy !== null}
-                            className="font-disp mt-3 flex items-center gap-2 border border-acc bg-acc px-4 py-2.5 text-[13px] font-bold tracking-[0.15em] text-bg0 hover:bg-acc2 disabled:opacity-40"
+                            type="button"
+                            onClick={() => {
+                              setPrintAlert(a);
+                              setPrintInc(null);
+                              setPrintIncList(null);
+                              setPrintModalOpen(true);
+                            }}
+                            className="font-disp flex items-center gap-1.5 border border-line-strong bg-panel2 px-3 py-2 text-[12px] font-bold tracking-[0.12em] text-acc hover:bg-panel transition-colors"
                           >
-                            {busy ? <Loader2 size={14} className="animate-spin" /> : null}
-                            ADVANCE → {ALERT_STATUS_LABEL[next]}
+                            <Printer size={13} /> PRINT 9-LINE / MIST CARD
                           </button>
-                        )}
+                          {canAct && next && (
+                            <button
+                              onClick={() => act("alerts", a.id, next)}
+                              disabled={busy !== null}
+                              className="font-disp flex items-center gap-2 border border-acc bg-acc px-4 py-2 text-[12px] font-bold tracking-[0.15em] text-bg0 hover:bg-acc2 disabled:opacity-40"
+                            >
+                              {busy ? <Loader2 size={14} className="animate-spin" /> : null}
+                              ADVANCE → {ALERT_STATUS_LABEL[next]}
+                            </button>
+                          )}
+                        </div>
                       </motion.div>
                     )}
                   </li>
@@ -287,18 +307,35 @@ MIST  ${a.payload.mist.mechanism}
               <div className="font-data text-[10px] tracking-[0.25em] text-faint">TACTICAL REPORTING</div>
               <h2 className="font-disp text-[15px] font-semibold tracking-[0.08em] text-ink">HAZARD / INCIDENT LOG</h2>
             </div>
-            <div className="flex gap-1 border border-line bg-panel2 p-0.5">
-              {(["open", "all", "resolved"] as const).map((f) => (
+            <div className="flex flex-wrap items-center gap-2">
+              {shownIncidents.length > 0 && (
                 <button
-                  key={f}
-                  onClick={() => setIncFilter(f)}
-                  className={`font-disp px-2.5 py-1 text-[11px] font-semibold tracking-[0.12em] ${
-                    incFilter === f ? "bg-acc text-bg0" : "text-dim hover:text-acc"
-                  }`}
+                  type="button"
+                  onClick={() => {
+                    setPrintIncList(shownIncidents);
+                    setPrintInc(null);
+                    setPrintAlert(null);
+                    setPrintModalOpen(true);
+                  }}
+                  className="font-disp flex items-center gap-1.5 border border-line bg-panel2 px-2.5 py-1 text-[11px] font-bold tracking-[0.12em] text-acc hover:border-acc/60 hover:bg-panel transition-colors"
+                  title="Print SITREP summary log of displayed incidents"
                 >
-                  {f.toUpperCase()}
+                  <Printer size={12} /> PRINT SITREP
                 </button>
-              ))}
+              )}
+              <div className="flex gap-1 border border-line bg-panel2 p-0.5">
+                {(["open", "all", "resolved"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setIncFilter(f)}
+                    className={`font-disp px-2.5 py-1 text-[11px] font-semibold tracking-[0.12em] ${
+                      incFilter === f ? "bg-acc text-bg0" : "text-dim hover:text-acc"
+                    }`}
+                  >
+                    {f.toUpperCase()}
+                  </button>
+                ))}
+              </div>
             </div>
           </header>
           {shownIncidents.length === 0 ? (
@@ -327,15 +364,30 @@ MIST  ${a.payload.mist.mechanism}
                       <span className="font-data text-[10px] tracking-[0.1em] text-faint">
                         {i.reporterRank} {i.reporterCallSign} · {zuluTime(i.createdAt)} ({timeAgo(i.createdAt)})
                       </span>
-                      {canAct && next && (
+                      <div className="ml-auto flex items-center gap-2">
                         <button
-                          onClick={() => act("incidents", i.id, next)}
-                          disabled={busy !== null}
-                          className="font-disp ml-auto border border-line-strong bg-panel2 px-2.5 py-1 text-[11px] font-bold tracking-[0.12em] text-acc hover:bg-panel disabled:opacity-40"
+                          type="button"
+                          onClick={() => {
+                            setPrintInc(i);
+                            setPrintIncList(null);
+                            setPrintAlert(null);
+                            setPrintModalOpen(true);
+                          }}
+                          className="font-disp flex items-center gap-1 border border-line bg-panel2 px-2.5 py-1 text-[11px] font-bold tracking-[0.1em] text-acc hover:bg-panel transition-colors"
+                          title="Print this incident report"
                         >
-                          → {INCIDENT_STATUS_LABEL[next]}
+                          <Printer size={12} /> PRINT
                         </button>
-                      )}
+                        {canAct && next && (
+                          <button
+                            onClick={() => act("incidents", i.id, next)}
+                            disabled={busy !== null}
+                            className="font-disp border border-line-strong bg-panel2 px-2.5 py-1 text-[11px] font-bold tracking-[0.12em] text-acc hover:bg-panel disabled:opacity-40"
+                          >
+                            → {INCIDENT_STATUS_LABEL[next]}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </li>
                 );
@@ -397,6 +449,15 @@ MIST  ${a.payload.mist.mechanism}
           </section>
         </div>
       </div>
+
+      {/* Tactical Hardcopy Print & Log Modal */}
+      <ReportPrintModal
+        isOpen={printModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        incident={printInc}
+        incidentList={printIncList}
+        alert={printAlert}
+      />
     </div>
   );
 }

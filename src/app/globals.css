@@ -315,3 +315,117 @@ input[type="range"].dimmer::-moz-range-thumb {
     animation: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* PRINT MEDIA STYLES — Tactical Documentation & Incident Reports      */
+/* ------------------------------------------------------------------ */
+@media print {
+  @page {
+    size: auto;
+    margin: 12mm 15mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    filter: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide app chrome, overlays, scanlines, noise, and navigation */
+  .scanlines,
+  .vignette,
+  .noise,
+  header:not(.print-header),
+  aside,
+  nav,
+  footer,
+  .no-print,
+  button:not(.print-include) {
+    display: none !important;
+  }
+
+  /* Reset layout constraints and offsets when printing */
+  .md\:pl-\[84px\] {
+    padding-left: 0 !important;
+  }
+
+  main {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Isolate modal print portal when active */
+  body.has-print-modal > *:not(#mters-print-portal) {
+    display: none !important;
+  }
+
+  #mters-print-portal,
+  #mters-print-portal > div {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Print document styling */
+  .print-document {
+    display: block !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: 2px solid #1f2937 !important;
+    padding: 16px 20px !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    page-break-after: auto !important;
+  }
+
+  .print-document * {
+    color: inherit !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #374151 !important;
+    padding: 6px 8px !important;
+    font-size: 9.5pt !important;
+  }
+
+  .print-table th {
+    background-color: #f3f4f6 !important;
+    font-weight: 700 !important;
+    text-align: left !important;
+  }
+
+  .print-border-box {
+    border: 1px solid #4b5563 !important;
+    background: #f9fafb !important;
+  }
+}

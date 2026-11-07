@@ -9,8 +9,10 @@ import {
   Check,
   Crosshair,
   Eye,
+  FileText,
   Flame,
   Loader2,
+  Printer,
   Radiation,
   RefreshCw,
   Send,
@@ -18,6 +20,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useMe } from "@/components/Shell";
+import { ReportPrintModal } from "@/components/ReportPrintModal";
 import { EmptyState, Pill, Seg, incidentStatusTone, severityTone } from "@/components/ui";
 import { acquireFix, toGrid, usePoll, type GeoFix } from "@/lib/client/hooks";
 import { apiGet, transmit } from "@/lib/client/net";
@@ -55,6 +58,10 @@ export default function ReportPage() {
   const [locating, setLocating] = useState(false);
   const [sending, setSending] = useState(false);
   const [flash, setFlash] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [generatedReport, setGeneratedReport] = useState<IncidentDTO | null>(null);
+  const [activePrintIncident, setActivePrintIncident] = useState<IncidentDTO | null>(null);
+  const [activePrintList, setActivePrintList] = useState<IncidentDTO[] | null>(null);
+  const [isPrintOpen, setIsPrintOpen] = useState(false);
   const tried = useRef(false);
 
   const { data, refresh } = usePoll(
@@ -88,7 +95,7 @@ export default function ReportPage() {
     if (sending) return;
     setSending(true);
     setFlash(null);
-    const res = await transmit("/api/incidents", {
+    const res = await transmit<{ incident: IncidentDTO }>("/api/incidents", {
       type,
       severity,
       grid: effGrid || "GRID UNAVAILABLE",
@@ -97,11 +104,45 @@ export default function ReportPage() {
       description: text,
     }, `${INCIDENT_TYPE_LABEL[type]} ${severity.toUpperCase()}`);
     if (res.ok) {
-      setFlash({ ok: true, msg: "REPORT TRANSMITTED — COC AND NEARBY UNITS NOTIFIED" });
+      const inc: IncidentDTO = res.data?.incident ?? {
+        id: "gen-" + Date.now(),
+        ref: "HZ-" + Math.random().toString(36).slice(2, 6).toUpperCase() + "-" + Math.random().toString(36).slice(2, 4).toUpperCase(),
+        type,
+        severity,
+        status: "reported",
+        lat: fix?.lat ?? null,
+        lng: fix?.lng ?? null,
+        grid: effGrid || "GRID UNAVAILABLE",
+        description: text.trim().toUpperCase(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        reporterCallSign: me?.callSign ?? "CALLSIGN",
+        reporterRank: me?.rank ?? "--",
+        unitCode: me?.unitCode ?? "1-B-1",
+      };
+      setGeneratedReport(inc);
+      setFlash({ ok: true, msg: `REPORT ${inc.ref} TRANSMITTED — COC AND NEARBY UNITS NOTIFIED` });
       setText("");
       void refresh();
     } else if (res.queued) {
-      setFlash({ ok: true, msg: "LINK DEGRADED — REPORT QUEUED, WILL AUTOSYNC" });
+      const inc: IncidentDTO = {
+        id: "queued-" + Date.now(),
+        ref: "HZ-" + Math.random().toString(36).slice(2, 6).toUpperCase() + "-TX",
+        type,
+        severity,
+        status: "reported",
+        lat: fix?.lat ?? null,
+        lng: fix?.lng ?? null,
+        grid: effGrid || "GRID UNAVAILABLE",
+        description: text.trim().toUpperCase(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        reporterCallSign: me?.callSign ?? "CALLSIGN",
+        reporterRank: me?.rank ?? "--",
+        unitCode: me?.unitCode ?? "1-B-1",
+      };
+      setGeneratedReport(inc);
+      setFlash({ ok: true, msg: "LINK DEGRADED — REPORT QUEUED LOCALLY, WILL AUTOSYNC" });
       setText("");
     } else {
       setFlash({ ok: false, msg: res.error ?? "REJECTED BY NET" });
@@ -206,6 +247,66 @@ export default function ReportPage() {
               {flash.msg}
             </motion.div>
           )}
+
+          {generatedReport && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-4 border border-acc/80 bg-acc/10 p-3.5 sm:p-4 text-ink space-y-3"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center border border-acc bg-acc/25 text-acc">
+                    <Check size={18} strokeWidth={2.5} />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="font-data text-[10px] tracking-[0.2em] text-acc font-semibold">
+                      REPORT GENERATED &amp; LOGGED
+                    </div>
+                    <div className="font-disp text-base font-bold tracking-[0.08em] truncate">
+                      {generatedReport.ref} · {INCIDENT_TYPE_LABEL[generatedReport.type]} ({generatedReport.severity.toUpperCase()})
+                    </div>
+                    <div className="font-data text-[10px] tracking-wider text-dim">
+                      GRID: {generatedReport.grid} · {INCIDENT_STATUS_LABEL[generatedReport.status]}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActivePrintIncident(generatedReport);
+                      setActivePrintList(null);
+                      setIsPrintOpen(true);
+                    }}
+                    className="font-disp flex items-center gap-1.5 border border-acc bg-acc px-3.5 py-1.5 text-xs font-bold tracking-[0.14em] text-bg0 transition-colors hover:brightness-110 shadow-sm"
+                  >
+                    <Printer size={13} /> PRINT REPORT
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActivePrintIncident(generatedReport);
+                      setActivePrintList(null);
+                      setIsPrintOpen(true);
+                    }}
+                    className="font-disp flex items-center gap-1 border border-line bg-panel2 px-2.5 py-1.5 text-xs font-semibold tracking-wider text-dim hover:text-ink hover:bg-panel"
+                  >
+                    <FileText size={13} /> DETAILS
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGeneratedReport(null)}
+                    className="font-disp border border-transparent px-2 py-1.5 text-[11px] font-semibold text-faint hover:text-dim"
+                  >
+                    DISMISS
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
 
         <button
@@ -219,35 +320,86 @@ export default function ReportPage() {
       </section>
 
       <section>
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <div className="font-data text-[10px] tracking-[0.25em] text-faint">YOUR RECENT REPORTS</div>
-          {me?.role !== "field" && (
-            <Link href="/board" className="font-data text-[10px] tracking-[0.2em] text-acc hover:underline">
-              MANAGE ON BOARD →
-            </Link>
-          )}
+          <div className="flex items-center gap-3">
+            {recent.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActivePrintList(recent);
+                  setActivePrintIncident(null);
+                  setIsPrintOpen(true);
+                }}
+                className="font-disp flex items-center gap-1.5 border border-line bg-panel2 px-2.5 py-1 text-[11px] font-bold tracking-[0.12em] text-acc hover:border-acc/60 hover:bg-panel"
+                title="Print consolidated summary log of all recent reports"
+              >
+                <Printer size={12} /> PRINT REPORT LOG
+              </button>
+            )}
+            {me?.role !== "field" && (
+              <Link href="/board" className="font-data text-[10px] tracking-[0.2em] text-acc hover:underline">
+                MANAGE ON BOARD →
+              </Link>
+            )}
+          </div>
         </div>
         {recent.length === 0 ? (
           <EmptyState title="NO REPORTS YET THIS SESSION" sub="TRANSMITTED REPORTS APPEAR HERE" />
         ) : (
           <ul className="space-y-2">
             {recent.map((i) => (
-              <li key={i.id} className="flex items-center gap-3 border border-line bg-panel/70 px-3.5 py-3">
+              <li
+                key={i.id}
+                className="flex flex-wrap items-center gap-3 border border-line bg-panel/70 px-3.5 py-3 transition-colors hover:border-line-strong"
+              >
                 <span className={`flex h-8 w-8 shrink-0 items-center justify-center border ${severityTone(i.severity) === "danger" ? "border-danger/50 text-danger" : "border-line text-warn"}`}>
                   {(TYPE_ICONS[i.type] ?? TYPE_ICONS.other)({ size: 15 })}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <div className="font-disp text-sm font-bold tracking-[0.08em] text-ink">{INCIDENT_TYPE_LABEL[i.type]}</div>
+                <div
+                  className="min-w-0 flex-1 cursor-pointer"
+                  onClick={() => {
+                    setActivePrintIncident(i);
+                    setActivePrintList(null);
+                    setIsPrintOpen(true);
+                  }}
+                >
+                  <div className="font-disp text-sm font-bold tracking-[0.08em] text-ink hover:text-acc transition-colors">
+                    {INCIDENT_TYPE_LABEL[i.type]}
+                  </div>
                   <div className="font-data text-[10px] tracking-[0.08em] text-faint">
                     {i.ref} · {timeAgo(i.createdAt)} · {i.grid}
                   </div>
                 </div>
-                <Pill tone={incidentStatusTone(i.status)}>{INCIDENT_STATUS_LABEL[i.status]}</Pill>
+                <div className="flex items-center gap-2">
+                  <Pill tone={incidentStatusTone(i.status)}>{INCIDENT_STATUS_LABEL[i.status]}</Pill>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActivePrintIncident(i);
+                      setActivePrintList(null);
+                      setIsPrintOpen(true);
+                    }}
+                    className="font-disp flex items-center gap-1 border border-line-strong bg-panel2 px-2.5 py-1 text-[11px] font-bold tracking-[0.1em] text-acc hover:bg-panel transition-colors"
+                    title="Print this incident report"
+                  >
+                    <Printer size={12} />
+                    <span className="hidden sm:inline">PRINT</span>
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      {/* Tactical Report Print & Hardcopy Modal */}
+      <ReportPrintModal
+        isOpen={isPrintOpen}
+        onClose={() => setIsPrintOpen(false)}
+        incident={activePrintIncident}
+        incidentList={activePrintList}
+      />
     </div>
   );
 }

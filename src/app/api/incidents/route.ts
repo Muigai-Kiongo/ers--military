@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { incidents as incidentsTable } from "@/db/schema";
 import { encryptPayload, makeRef } from "@/lib/crypto";
 import { INCIDENT_TYPE_LABEL } from "@/lib/domain";
-import { getCurrentUser, listIncidents, logEvent, unauthorized } from "@/lib/server";
+import { getCurrentUser, listIncidents, logEvent, serializeIncident, unauthorized } from "@/lib/server";
 
 export const dynamic = "force-dynamic";
 
@@ -63,5 +63,5 @@ export async function POST(req: Request) {
     ref,
     user.callSign,
   );
-  return Response.json({ ok: true, incident: inserted[0] });
+  return Response.json({ ok: true, incident: serializeIncident(inserted[0], user) });
 }
